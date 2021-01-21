@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 
 import torch.nn as nn
-from genaral_ner.model.embedders import BertEmbedder
-# from genaral_ner.model.NCRF import CRF
-from genaral_ner.model.CRF import CRF
-from genaral_ner.model.attention import Attn
+from blnlp.model.embedders import BertEmbedder
+# from blnlp.model.NCRF import CRF
+from blnlp.model.CRF import CRF
+from blnlp.model.attention import Attn
 import torch
-from genaral_ner.train_model.utils import load_vocab
+from blnlp.train_model.utils import load_vocab
 
 
 class BERT_LSTM_CRF(nn.Module):
@@ -81,7 +81,7 @@ class BERT_CRF(nn.Module):
         self.embed_dim = embed_dim
         self.encoder = BertEmbedder.create()
         self.dropout1 = nn.Dropout(p=dropout1)
-        self.linear = nn.Linear(self.embed_dim, self.num_tags + 2)
+        self.linear = nn.Linear(self.embed_dim, self.num_tags)
         self.crf = CRF(num_tags=self.num_tags, device=self.device)
 
     def forward(self, input_ids, attention_mask=None):
@@ -122,7 +122,7 @@ class BERT_LSTM_ATTN_CRF(nn.Module):
                             bidirectional=True)
         config.update(attention_dim=self.hidden_dim * 2)
         self.attention = Attn(config)
-        self.linear = nn.Linear(self.hidden_dim * 2, self.num_tags + 2)
+        self.linear = nn.Linear(self.hidden_dim * 2, self.num_tags)
         self.dropout = nn.Dropout(dropout1)
         self.crf = CRF(num_tags=self.num_tags, device=self.device)
         self.init_weights()
@@ -173,7 +173,7 @@ class BERT_ATTN_CRF(nn.Module):
         self.attention = Attn(config)
         self.dropout = nn.Dropout(dropout1)
         config.update(attention_dim=embedding_dim)
-        self.linear = nn.Linear(embedding_dim, self.num_tags + 2)
+        self.linear = nn.Linear(embedding_dim, self.num_tags)
         self.crf = CRF(num_tags=self.num_tags, device=self.device)
 
     def forward(self, input_ids, attention_mask=None):

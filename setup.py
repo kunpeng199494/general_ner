@@ -52,11 +52,11 @@ setup(
     ),
     python_requires='>=3.6, <4',
     install_requires=[
-        "hao == 0.3",
+        "hao",
         "sklearn",
         "torch == 1.5.0",
         "numpy",
-        "transformers == 2.11.0"
+        "transformers == 4.2.2"
     ],
     extras_require={  # Optional
         'dev': [],

@@ -5,10 +5,10 @@ import os
 import codecs
 import json
 from torch import nn
-from hao.logs import get_logger
-from transformers.configuration_bert import BertConfig
-from general_ner.model.bert_crop import BertCropModel
-from general_ner.train_model.config import Config
+from spanner.logs import get_logger
+from transformers import BertConfig
+from blnlp.model.bert_crop import BertCropModel
+from blnlp.train_model.config import Config
 
 model_config = Config()
 
