@@ -54,7 +54,7 @@ setup(
     install_requires=[
         "hao",
         "sklearn",
-        "torch == 1.5.0",
+        "torch >= 1.5.0",
         "numpy",
         "transformers == 4.2.2"
     ],
