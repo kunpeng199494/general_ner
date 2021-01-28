@@ -2,8 +2,8 @@
 
 import os
 import hao
-from general_ner.train_model.config import Config
-from general_ner.train_model.ner import train_from_blank, static_test, predict_line, load_model_for_predict
+from general_ner.config import Config
+from general_ner.ner import train_from_blank, static_test, predict_line, load_model_for_predict
 
 
 if __name__ == '__main__':

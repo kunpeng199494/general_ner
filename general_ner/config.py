@@ -2,8 +2,8 @@
 
 import os
 import sys
-import spanner
-root_dir = spanner.paths.project_root_path()
+import hao
+root_dir = hao.paths.project_root_path()
 sys.path.append(root_dir)
 import torch
 

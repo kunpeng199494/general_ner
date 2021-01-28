@@ -5,7 +5,7 @@ import torch.nn as nn
 from transformers.models.bert.modeling_bert import BertLayer, BertEmbeddings
 import copy
 from transformers import BertConfig
-from spanner.logs import get_logger
+from hao.logs import get_logger
 import re
 
 BertLayerNorm = torch.nn.LayerNorm

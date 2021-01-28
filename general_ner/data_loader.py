@@ -8,7 +8,7 @@ root_dir = hao.paths.project_root_path()
 sys.path.append(root_dir)
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from general_ner.train_model.utils import load_vocab, read_corpus, process_line
+from general_ner.utils import load_vocab, read_corpus, process_line
 
 
 def data_load(config):

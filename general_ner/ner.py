@@ -8,17 +8,17 @@ sys.path.append(root_dir)
 import time
 import torch
 import torch.nn as nn
-from genaral_ner.train_model.config import Config
-from genaral_ner.model.ner_models import *
+from genaral_ner.config import Config
+from genaral_ner.ner_models import *
 import torch.optim as optim
-from genaral_ner.train_model.utils import load_vocab, read_corpus, process_line, ids_labels
-from genaral_ner.train_model.data_loader import data_load, batch_predict_loader
+from genaral_ner.utils import load_vocab, read_corpus, process_line, ids_labels
+from genaral_ner.data_loader import data_load, batch_predict_loader
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 from sklearn import metrics
 from transformers import get_linear_schedule_with_warmup
 from tensorboardX import SummaryWriter
-from genaral_ner.train_model.metrics import span_classification_report
+from genaral_ner.metrics import span_classification_report
 
 LOGGER = hao.logs.get_logger(__name__)
 

@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 
 import torch.nn as nn
-from general_ner.model.embedders import BertEmbedder
-# from blnlp.model.NCRF import CRF
-from general_ner.model.CRF import CRF
-from general_ner.model.attention import Attn
+from general_ner.embedders import BertEmbedder
+# from general_ner.NCRF import CRF
+from general_ner.CRF import CRF
+from general_ner.attention import Attn
 import torch
-from general_ner.train_model.utils import load_vocab
+from general_ner.utils import load_vocab
 
 
 class BERT_LSTM_CRF(nn.Module):
