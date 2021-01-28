@@ -7,8 +7,8 @@ import json
 from torch import nn
 from spanner.logs import get_logger
 from transformers import BertConfig
-from blnlp.model.bert_crop import BertCropModel
-from blnlp.train_model.config import Config
+from general_ner.model.bert_crop import BertCropModel
+from general_ner.train_model.config import Config
 
 model_config = Config()
 
@@ -34,8 +34,8 @@ class BertEmbedder(nn.Module):
             nn.init.xavier_normal_(self.bert_gamma)
             nn.init.xavier_normal_(self.bert_weights)
 
-    def forward(self, input_ids, attention_mask=None):
-        encoder_output = self.model(input_ids, attention_mask=attention_mask)
+    def forward(self, input_ids, attention_mask=None, head_mask=None):
+        encoder_output = self.model(input_ids, attention_mask=attention_mask, head_mask=head_mask)
         if model_config.bert_mode == "last":
             return encoder_output[0]
         elif model_config.bert_mode == "weighted":

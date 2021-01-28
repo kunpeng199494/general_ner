@@ -45,7 +45,8 @@ def init_model(config):
     # model = BERT_ATTN_CRF(config,
     #                       config.bert_embedding,
     #                       config.dropout1)
-    return model
+    head_mask = None if config.head_mask is None else config.head_mask.to(config.device)
+    return model, head_mask
 
 
 def init_optimizer(config, model, optimizer):
@@ -130,7 +131,7 @@ def train_from_blank(config):
     labels = list(load_vocab(config.label_file).keys())
 
     LOGGER.info("Initialization model ...")
-    model = init_model(config)
+    model, head_mask = init_model(config)
 
     LOGGER.info("Training model ...")
     model.to(config.device)
@@ -160,7 +161,7 @@ def train_from_blank(config):
             total_step += 1
             optimizer.zero_grad()
             inputs, masks, tags = batch
-            feats = model(inputs, attention_mask=masks)
+            feats = model(inputs, masks, head_mask)
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
@@ -174,7 +175,7 @@ def train_from_blank(config):
                     pred.extend(b)
                     true.extend(t.cpu().tolist()[:length])
                 train_acc = metrics.accuracy_score(true, pred)
-                loss_temp, dev_acc = dev(model, dev_loader)
+                loss_temp, dev_acc = dev(model, dev_loader, head_mask)
 
                 writer.add_scalar("loss/train", loss.item(), total_batch)
                 writer.add_scalar("loss/dev", loss_temp, total_batch)
@@ -201,7 +202,7 @@ def train_from_blank(config):
         if flag:
             break
     writer.close()
-    test_loss, test_acc, report, span_report = dynamic_test(model, test_loader, labels)
+    test_loss, test_acc, report, span_report = dynamic_test(config, model, test_loader, labels, head_mask)
     test_acc = str(test_acc.item() * 100.)[:5] + "%"
     LOGGER.info("test_loss: {}".format(str(test_loss)[:6]))
     LOGGER.info("test_acc: {}".format(test_acc))
@@ -216,7 +217,7 @@ def train_from_saved(config):
     labels = list(load_vocab(config.label_file).keys())
 
     LOGGER.info("Initialization model ...")
-    model = init_model(config)
+    model, head_mask = init_model(config)
 
     # 从硬盘中加载之前训练到某个程度的模型
     assert config.save_path is not None
@@ -255,7 +256,7 @@ def train_from_saved(config):
             total_step += 1
             optimizer.zero_grad()
             inputs, masks, tags = batch
-            feats = model(inputs, attention_mask=masks)
+            feats = model(inputs, masks, head_mask)
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
@@ -269,7 +270,7 @@ def train_from_saved(config):
                     pred.extend(b)
                     true.extend(t.cpu().tolist()[:length])
                 train_acc = metrics.accuracy_score(true, pred)
-                loss_temp, dev_acc = dev(model, dev_loader)
+                loss_temp, dev_acc = dev(model, dev_loader, head_mask)
 
                 writer.add_scalar("loss/train", loss.item(), total_batch)
                 writer.add_scalar("loss/dev", loss_temp, total_batch)
@@ -296,7 +297,7 @@ def train_from_saved(config):
         if flag:
             break
     writer.close()
-    test_loss, test_acc, report, span_report = dynamic_test(model, test_loader, labels)
+    test_loss, test_acc, report, span_report = dynamic_test(model, test_loader, labels, head_mask)
     test_acc = str(test_acc.item() * 100.)[:5] + "%"
     LOGGER.info("test_loss: {}".format(str(test_loss)[:6]))
     LOGGER.info("test_acc: {}".format(test_acc))
@@ -304,7 +305,7 @@ def train_from_saved(config):
     LOGGER.info(span_report)
 
 
-def dev(model, dev_loader):
+def dev(model, dev_loader, head_mask):
     model.eval()
     eval_loss = 0
     batches = 0
@@ -313,7 +314,7 @@ def dev(model, dev_loader):
     for i, batch in enumerate(dev_loader):
         inputs, masks, tags = batch
         batches += 1
-        feats = model(inputs, masks)
+        feats = model(inputs, masks, head_mask)
         path_score, best_path = model.crf(feats, masks)
         loss = model.loss(feats, masks, tags)
         eval_loss += loss.item()
@@ -326,7 +327,7 @@ def dev(model, dev_loader):
     return eval_loss / batches, dev_acc
 
 
-def dynamic_test(model, test_loader, labels):
+def dynamic_test(config, model, test_loader, labels, head_mask):
     labels = labels[1:]
 
     ids2labels = ids_labels(config)
@@ -342,7 +343,7 @@ def dynamic_test(model, test_loader, labels):
     for i, batch in enumerate(test_loader):
         inputs, masks, tags = batch
         batches += 1
-        feats = model(inputs, masks)
+        feats = model(inputs, masks, head_mask)
         path_score, best_path = model.crf(feats, masks.byte())
         loss = model.loss(feats, masks, tags)
         eval_loss += loss.item()
@@ -365,7 +366,7 @@ def static_test(config):
 
     ids2labels = ids_labels(config)
 
-    model = init_model(config)
+    model, head_mask = init_model(config)
 
     if config.use_cuda:
         model.load_state_dict(torch.load(config.save_path))
@@ -387,7 +388,7 @@ def static_test(config):
     for i, batch in enumerate(test_loader):
         inputs, masks, tags = batch
         batches += 1
-        feats = model(inputs, masks)
+        feats = model(inputs, masks, head_mask)
         path_score, best_path = model.crf(feats, masks.byte())
         loss = model.loss(feats, masks, tags)
         eval_loss += loss.item()
@@ -408,7 +409,7 @@ def static_test(config):
 
 def load_model_for_predict(config):
 
-    model = init_model(config)
+    model, head_mask = init_model(config)
 
     if config.use_cuda:
         model.load_state_dict(torch.load(config.save_path))
@@ -419,10 +420,10 @@ def load_model_for_predict(config):
     model.to(config.device)
     model.eval()
 
-    return model
+    return model, head_mask
 
 
-def predict_line(config, model, line):
+def predict_line(config, model, line, head_mask):
 
     vocab = load_vocab(config.vocab)
 
@@ -435,7 +436,7 @@ def predict_line(config, model, line):
     inputs = torch.LongTensor([predict_data.input_id]).to(config.device)
     masks = torch.LongTensor([predict_data.input_mask]).to(config.device)
 
-    feats = model(inputs, masks)
+    feats = model(inputs, masks, head_mask)
     path_score, best_path = model.crf(feats, masks.bool())
     labels = [ids2labels[t] for t in best_path[0]]
 
@@ -461,7 +462,7 @@ def predict_line(config, model, line):
 
 
 def batch_predict(config):
-    model = init_model(config)
+    model, head_mask = init_model(config)
 
     if config.use_cuda:
         model.load_state_dict(torch.load(config.save_path))
@@ -477,7 +478,7 @@ def batch_predict(config):
     pred = []
     for i, batch in enumerate(test_loader):
         inputs, masks = batch
-        feats = model(inputs, masks)
+        feats = model(inputs, masks, head_mask)
         path_score, best_path = model.crf(feats, masks.bool())
         for line in best_path.tolist():
             pred.append([ids2labels[t] for t in line])
@@ -495,9 +496,9 @@ if __name__ == "__main__":
 
     # train_from_saved(model_config)
 
-    model_ = load_model_for_predict(model_config)
+    model_, head_mask_ = load_model_for_predict(model_config)
 
-    static_test(model_config)
+    # static_test(model_config)
 
     # test_loss, test_acc, report = static_test(model_config)
     # test_acc = str(test_acc * 100.)[:5] + "%"
@@ -510,6 +511,6 @@ if __name__ == "__main__":
              "第32例移工外勞染疫新聞事件，造成人人都恐慌害怕!但我在捷運上還是看到很多人搭捷運不戴口罩的……非常時期實在好可怕。",
              "還好板橋車站沒有印尼移工的群聚∼真是太好了。第一次看到他們群聚在台北車站時，我還以為發生什麼大事，而且他們還直接坐在地上，同行的國外朋友也問我發生何事，當時我楞住了一下只能回說不知道。現在發生第32例的事,政府也應該好好處理非法外勞與外勞群聚的地點，替他們找個開放空間又不影響交通與觀感處。"]
     for text in texts:
-        word, spend = predict_line(model_config, model_, text)
+        word, spend = predict_line(model_config, model_, text, head_mask_)
         print(word)
         print(spend)

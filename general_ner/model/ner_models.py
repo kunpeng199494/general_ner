@@ -1,12 +1,12 @@
 # -*- coding:utf-8 -*-
 
 import torch.nn as nn
-from blnlp.model.embedders import BertEmbedder
+from general_ner.model.embedders import BertEmbedder
 # from blnlp.model.NCRF import CRF
-from blnlp.model.CRF import CRF
-from blnlp.model.attention import Attn
+from general_ner.model.CRF import CRF
+from general_ner.model.attention import Attn
 import torch
-from blnlp.train_model.utils import load_vocab
+from general_ner.train_model.utils import load_vocab
 
 
 class BERT_LSTM_CRF(nn.Module):
@@ -46,8 +46,8 @@ class BERT_LSTM_CRF(nn.Module):
             if len(p.shape) >= 2:
                 nn.init.xavier_normal_(p)
 
-    def forward(self, input_ids, attention_mask=None):
-        embeds = self.encoder(input_ids, attention_mask=attention_mask)
+    def forward(self, input_ids, attention_mask=None, head_mask=None):
+        embeds = self.encoder(input_ids, attention_mask=attention_mask, head_mask=head_mask)
 
         lens = attention_mask.sum(1)
         sorted_lengths, sorted_idx = torch.sort(lens, descending=True)
@@ -84,8 +84,8 @@ class BERT_CRF(nn.Module):
         self.linear = nn.Linear(self.embed_dim, self.num_tags)
         self.crf = CRF(num_tags=self.num_tags, device=self.device)
 
-    def forward(self, input_ids, attention_mask=None):
-        embeds = self.encoder(input_ids, attention_mask=attention_mask)
+    def forward(self, input_ids, attention_mask=None, head_mask=None):
+        embeds = self.encoder(input_ids, attention_mask=attention_mask, head_mask=head_mask)
         # embeds: [batch_size, sequence_length, embedding_dim]
         batch_size, sequence_length, embed_dim = embeds.size()
         embeds = embeds.contiguous().view(-1, self.embed_dim)
@@ -132,8 +132,8 @@ class BERT_LSTM_ATTN_CRF(nn.Module):
             if len(p.shape) >= 2:
                 nn.init.xavier_normal_(p)
 
-    def forward(self, input_ids, attention_mask=None):
-        embeds = self.encoder(input_ids, attention_mask=attention_mask)
+    def forward(self, input_ids, attention_mask=None, head_mask=None):
+        embeds = self.encoder(input_ids, attention_mask=attention_mask, head_mask=head_mask)
 
         lens = attention_mask.sum(1)
         sorted_lengths, sorted_idx = torch.sort(lens, descending=True)
@@ -176,8 +176,8 @@ class BERT_ATTN_CRF(nn.Module):
         self.linear = nn.Linear(embedding_dim, self.num_tags)
         self.crf = CRF(num_tags=self.num_tags, device=self.device)
 
-    def forward(self, input_ids, attention_mask=None):
-        embeds = self.encoder(input_ids, attention_mask=attention_mask)
+    def forward(self, input_ids, attention_mask=None, head_mask=None):
+        embeds = self.encoder(input_ids, attention_mask=attention_mask, head_mask=head_mask)
         # embeds: [batch_size, sequence_length, embedding_dim]
         attn_out = self.attention.forward(embeds, attention_mask=attention_mask[:, :embeds.size(1)])[0]
         batch_size, sequence_length, embedding_dim = attn_out.size()

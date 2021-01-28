@@ -2,20 +2,20 @@
 
 import os
 import sys
-import hao
-root_dir = hao.paths.project_root_path()
+import spanner
+root_dir = spanner.paths.project_root_path()
 sys.path.append(root_dir)
 import torch
 
 
 class Config(object):
     def __init__(self):
-        self.label_file = os.path.join(root_dir, "data/train_dev_test/labels.txt")
-        self.train_file = os.path.join(root_dir, "data/train_dev_test/train.txt")
-        self.dev_file = os.path.join(root_dir, "data/train_dev_test/dev.txt")
-        self.test_file = os.path.join(root_dir, "data/train_dev_test/test.txt")
-        self.model_name = "BERT_LSTM_CRF"
-        self.log_path = os.path.join(root_dir, f"data/logs/tensorboard_logs/{self.model_name}")
+        self.label_file = os.path.join(root_dir, "data/process_data/training_data/labels.txt")
+        self.train_file = os.path.join(root_dir, "data/process_data/training_data/train.txt")
+        self.dev_file = os.path.join(root_dir, "data/process_data/training_data/dev.txt")
+        self.test_file = os.path.join(root_dir, "data/process_data/training_data/test.txt")
+        self.model_name = "2021_01_25_BERT_LSTM_CRF"
+        self.log_path = os.path.join(root_dir, f"data/logs/tensorboard_logs/2021_01_25_{self.model_name}")
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path, exist_ok=True)
         self.bert_path = os.path.join(root_dir, "data/bert")
@@ -25,12 +25,14 @@ class Config(object):
         self.num_attention_heads = 4
         self.attention_dim = 768
         self.freeze = True
-        self.use_cuda = False
+        self.use_cuda = True
         self.output_attentions = False
         self.hidden_dropout_prob = 0.1
         self.attention_probs_dropout_prob = 0.1
         self.layer_norm_eps = 1e-12
         self.bert_mode = "weighted"
+        self.head_mask = torch.LongTensor([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        # self.head_mask = None
         self.gpu = 1
         self.batch_size = 16
         self.max_length = 128
@@ -43,8 +45,6 @@ class Config(object):
         self.weight_decay = 0.00005
         self.optim = "Adam"
         self.save_path = os.path.join(root_dir, f"data/save_model/{self.model_name}.pt")
-        if not os.path.exists(self.save_path):
-            os.makedirs(self.save_path, exist_ok=True)
         self.base_epoch = 100
         self.early_stop = 1000
         self.warmup_ratio = 0.1
